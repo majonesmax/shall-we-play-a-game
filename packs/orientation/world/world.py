@@ -5,6 +5,9 @@ baseboards, a dim green carpet, pools of fluorescent light from ceiling panels y
 Every place shares the corridor style; pack.json gives each place its name and a tint (areas[place]["tint"]).
 The castle gates are elevator doors: the gate's opening (its height in the game) slides two doors apart.
 Now and then a room's fluorescent lights stutter (lighting()).
+The three castles are structures inside the floor, painted onto the castle's own walls (the game's outline -
+where you can walk - is untouched): a wall of filing cabinets (Records), a padded partition suite (Wellness),
+a wire-mesh storage cage (Archives). Their battlements become what's stacked on top.
 """
 
 import numpy as np
@@ -56,6 +59,69 @@ def elevator(w, h, finish):
     return out
 
 
+CASTLE_ROOMS = {0x11: "records", 0x0F: "wellness", 0x10: "archives"}  # gold, white, black
+CASTLE_BOX = (60, 180, 0, 144)  # the castle's part of the room: x0, x1, y0, y1 (grid columns 10-29, rows 0-4)
+TOP = 16                        # the battlements' row
+
+
+def records(img, cm, xx, yy):
+    """A wall of beige filing cabinets, binders and boxes stacked on top."""
+    cab, drawer = 12, 12
+    body = cm & (yy >= TOP)
+    img[body] = (196, 184, 150)
+    front = body & ((yy - TOP) % drawer >= 1) & ((xx % cab) >= 1) & ((xx % cab) <= cab - 2)
+    img[front] = (214, 204, 172)                                         # each drawer's face
+    img[body & ((yy - TOP) % drawer == 0)] = (120, 110, 88)              # the seams between drawers
+    img[body & (xx % cab == 0)] = (96, 88, 70)                           # between cabinets
+    handle = front & ((yy - TOP) % drawer == 7) & (np.abs(xx % cab - 6) <= 2)
+    img[handle] = (70, 66, 60)
+    label = front & ((yy - TOP) % drawer >= 3) & ((yy - TOP) % drawer <= 4) & (np.abs(xx % cab - 6) <= 1)
+    img[label] = (240, 236, 222)
+    top = cm & (yy < TOP)                                                # boxes and binders on top
+    colours = [(150, 116, 72), (60, 84, 120), (150, 116, 72), (120, 50, 46), (166, 132, 86), (64, 96, 78)]
+    img[top] = np.array(colours)[(xx[top] // 6) % len(colours)]
+    img[top & (yy % 8 == 7)] = (90, 70, 46)
+
+
+def wellness(img, cm, xx, yy):
+    """A padded partition suite: pale cushioned panels with wood trim, small plants along the top."""
+    panel = 16
+    body = cm & (yy >= TOP)
+    u = (xx % panel) / (panel - 1)
+    cushion = 1.0 - 0.18 * (2 * u - 1) ** 2                              # each panel rounded, lit from the front
+    img[body] = (np.array((214, 216, 206), float)[None] * cushion[body][:, None]).astype(int)
+    img[body & (xx % panel == 0)] = (150, 152, 144)
+    img[body & ((yy == TOP) | (yy == TOP + 1))] = (150, 110, 74)         # wood trim, top and bottom
+    img[body & (yy >= CASTLE_BOX[3] - 4)] = (150, 110, 74)
+    top = cm & (yy < TOP)                                                # a potted plant on each bump
+    img[top] = (54, 76, 64)                                              # (the carpet shows round them)
+    pot = top & (yy >= TOP - 5)
+    img[pot] = (176, 96, 64)
+    leaves = top & (yy < TOP - 5) & (yy >= 2) & ((xx + yy) % 3 != 0)
+    img[leaves] = (76, 140, 82)
+
+
+def archives(img, cm, xx, yy):
+    """A wire-mesh storage cage: steel frame, a grid of mesh, shelves of archive boxes in the dark behind.
+    Ducts and vents along the top."""
+    body = cm & (yy >= TOP)
+    img[body] = (24, 26, 30)                                             # the dark inside
+    shelf = body & ((yy - TOP) % 24 == 23)
+    img[shelf] = (70, 74, 80)
+    box = body & ((yy - TOP) % 24 >= 12) & ((yy - TOP) % 24 <= 21) & ((xx % 14) >= 2) & ((xx % 14) <= 11)
+    img[box] = (96, 80, 58)                                              # archive boxes on the shelves
+    img[box & ((yy - TOP) % 24 == 16) & (np.abs(xx % 14 - 6) <= 1)] = (200, 196, 180)  # their labels
+    mesh = body & ((xx % 4 == 0) | ((yy - TOP) % 4 == 0))
+    img[mesh] = (104, 110, 116)                                          # the mesh in front of it all
+    img[body & ((xx % 40 == 0) | (xx % 40 == 1))] = (52, 56, 60)        # the frame's uprights
+    top = cm & (yy < TOP)                                                # vent stacks with dark slits
+    img[top] = (112, 116, 122)
+    img[top & (yy % 4 == 2)] = (40, 42, 46)
+
+
+STRUCTURES = {"records": records, "wellness": wellness, "archives": archives}
+
+
 FLICKER = {0: 0.72, 1: 0.72, 2: 0.72, 5: 0.82, 6: 0.82, 11: 0.76}  # frames into a stutter -> how lit
 
 
@@ -104,5 +170,11 @@ class CustomWorld(World):
         for k, dim in ((1, 0.62), (2, 0.72), (3, 0.82), (4, 0.9)):
             below = ~m & np.roll(m, k, axis=0)
             img[below] *= dim
+        if n in CASTLE_ROOMS:  # the castle's walls as a structure on the floor
+            x0, x1, y0, y1 = CASTLE_BOX
+            cm = m & (xx >= x0) & (xx < x1) & (yy >= y0) & (yy < y1)
+            STRUCTURES[CASTLE_ROOMS[n]](img, cm, xx, yy)
+            if CASTLE_ROOMS[n] != "wellness":  # standing on the floor: a baseboard, like the corridor walls
+                img[cm & base] = BASEBOARD
         self.rooms[n] = np.clip(img, 0, 255).astype(np.uint8)
         return self.rooms[n]
