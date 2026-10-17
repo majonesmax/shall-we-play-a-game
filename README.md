@@ -33,6 +33,11 @@ ADVENTURE_PACKS=../shall-we-play-a-game/packs python play.py --pack sketchbook -
 
 ## Making one
 
+Each demo here was made with an AI coding assistant (Claude Code): described in a few sentences, drawn as text
+art, previewed in every look, and changed until it looked right. Do the same: clone this repository next to
+Adventure Forever, open an assistant in it, and describe your idea. [CLAUDE.md](CLAUDE.md) gives it the
+commands and the rules - above all, *if you know, you know*: inspired by something, naming none of it.
+
 A pack is a folder with a `pack.json`, a `cast/` and/or a `world/`: see
 [making a pack](https://github.com/majonesmax/adventure-forever/blob/main/docs/making-a-pack.md).
 

@@ -12,7 +12,8 @@ import numpy as np
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-for root in (os.environ.get("ADVENTURE_FOREVER", ""), os.path.join(HERE, "..", "..", "..", "..", "adventure-nes")):
+for root in (os.environ.get("ADVENTURE_FOREVER", ""), *(os.path.join(HERE, "..", "..", "..", "..", name)
+                                                      for name in ("adventure-forever", "adventure-nes"))):
     if root and os.path.isdir(os.path.join(root, "content")):
         sys.path.insert(0, root)  # Adventure Forever's helpers (shared/pixelart.py, content/)
         break
