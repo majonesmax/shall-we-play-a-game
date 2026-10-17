@@ -5,20 +5,107 @@
     "title_small": "ORIENTATION",
     "footer": "WELCOME. YOU WILL BE FINE.",
     "areas": {
-      "default":             {"name": "CORRIDOR"},
-      "meadow":              {"name": "LOBBY"},
-      "gold_castle":         {"name": "RECORDS",        "tint": [1.06, 1.0, 0.9]},
-      "gold_castle_inside":  {"name": "RECORDS OFFICE", "tint": [1.06, 1.0, 0.9]},
-      "labyrinth":           {"name": "HALLWAYS"},
-      "catacombs":           {"name": "MAINTENANCE",    "tint": [0.9, 0.92, 0.9]},
-      "white_castle":        {"name": "WELLNESS",       "tint": [0.94, 1.0, 1.08]},
-      "white_castle_inside": {"name": "WELLNESS SUITE", "tint": [0.94, 1.0, 1.08]},
-      "black_castle":        {"name": "ARCHIVES",       "tint": [0.78, 0.8, 0.84]},
-      "black_castle_inside": {"name": "ARCHIVE VAULT",  "tint": [0.78, 0.8, 0.84]},
-      "black_maze":          {"name": "SUBLEVEL",       "tint": [0.8, 0.82, 0.86]},
-      "red_maze":            {"name": "TESTING FLOOR",  "tint": [1.04, 0.92, 0.9]},
-      "purple_room":         {"name": "BREAK ROOM"},
-      "credit_room":         {"name": "BREAK ROOM"}
+      "default": {
+        "name": "CORRIDOR"
+      },
+      "meadow": {
+        "name": "LOBBY"
+      },
+      "gold_castle": {
+        "name": "RECORDS",
+        "tint": [
+          1.06,
+          1.0,
+          0.9
+        ]
+      },
+      "gold_castle_inside": {
+        "name": "RECORDS OFFICE",
+        "tint": [
+          1.06,
+          1.0,
+          0.9
+        ]
+      },
+      "labyrinth": {
+        "name": "HALLWAYS"
+      },
+      "catacombs": {
+        "name": "MAINTENANCE",
+        "tint": [
+          0.9,
+          0.92,
+          0.9
+        ]
+      },
+      "white_castle": {
+        "name": "WELLNESS",
+        "tint": [
+          0.94,
+          1.0,
+          1.08
+        ]
+      },
+      "white_castle_inside": {
+        "name": "WELLNESS SUITE",
+        "tint": [
+          0.94,
+          1.0,
+          1.08
+        ]
+      },
+      "black_castle": {
+        "name": "ARCHIVES",
+        "tint": [
+          0.78,
+          0.8,
+          0.84
+        ]
+      },
+      "black_castle_inside": {
+        "name": "ARCHIVE VAULT",
+        "tint": [
+          0.78,
+          0.8,
+          0.84
+        ]
+      },
+      "black_maze": {
+        "name": "SUBLEVEL",
+        "tint": [
+          0.8,
+          0.82,
+          0.86
+        ]
+      },
+      "red_maze": {
+        "name": "TESTING FLOOR",
+        "tint": [
+          1.04,
+          0.92,
+          0.9
+        ]
+      },
+      "purple_room": {
+        "name": "BREAK ROOM"
+      },
+      "credit_room": {
+        "name": "BREAK ROOM"
+      }
     }
+  },
+  "cast": {
+    "name": "THE NEW HIRE",
+    "win_lines": [
+      "WELL DONE.",
+      "SHE IS HOME.",
+      "THE WORK CONTINUES."
+    ],
+    "title_cast": [
+      "hero_down_0",
+      "bat_up"
+    ],
+    "messenger_every": 24,
+    "foot_gap": 1
   }
 }
