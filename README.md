@@ -4,9 +4,9 @@ Demo packs for [Adventure Forever](https://github.com/majonesmax/adventure-forev
 running unmodified in an emulator and redrawn live from its RAM. Each demo is a **pack**: a cast (who's in
 the game) and a world (where it happens) that any of Adventure Forever's looks can show.
 
-| Demo | What it is | Best with |
-|---|---|---|
-| [`packs/orientation`](packs/orientation) | an office floor that goes on too long: off-white corridors, dim green carpet, flickering fluorescent light, departments behind elevator doors, a goat, and its own FM soundtrack | the VGA look |
+| Demo | |
+|---|---|
+| **[ORIENTATION](packs/orientation)**<br>best in the VGA look | an office floor that goes on too long: off-white corridors, dim green carpet, flickering fluorescent light, departments behind elevator doors, a goat, and its own FM soundtrack<br><br><a href="packs/orientation"><img src="docs/media/orientation.png" alt="ORIENTATION in the VGA look: the Records filing cabinets, the lobby, the Wellness suite"></a> |
 
 ## Playing a demo
 
