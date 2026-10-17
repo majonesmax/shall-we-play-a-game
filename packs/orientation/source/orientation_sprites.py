@@ -24,6 +24,16 @@ def from_ascii(art, colours):
     return _from_ascii(pad(art), colours, strict=True)
 
 
+def taller(art, rows):
+    """Text art with the listed rows repeated - a longer torso, longer legs - so a figure grows without being
+    redrawn (rows numbered from 0, after padding)."""
+    lines = pad(art).strip("\n").split("\n")
+    out = []
+    for i, line in enumerate(lines):
+        out += [line, line] if i in rows else [line]
+    return "\n" + "\n".join(out)
+
+
 def pad(art):
     """Text art with every row right-padded with "." to the widest - so hand-drawn rows needn't be counted."""
     rows = art.strip("\n").split("\n")
@@ -121,10 +131,14 @@ _HIRE_SIDE_LEGS = ["""
 ................"""]
 
 
+HIRE_TALLER = (12, 17, 19, 20)  # the shirt and the legs: 24 -> 28 rows
+
+
 def hire_frames():
-    front = [from_ascii(_HIRE_HEAD + _HIRE_BODY + legs, HIRE) for legs in _HIRE_LEGS]
-    back = [from_ascii(_HIRE_BACK_HEAD + _HIRE_BACK_BODY + legs, HIRE) for legs in _HIRE_LEGS]
-    side = [from_ascii(_HIRE_SIDE + legs, HIRE) for legs in _HIRE_SIDE_LEGS]
+    grow = lambda art: from_ascii(taller(art, HIRE_TALLER), HIRE)
+    front = [grow(_HIRE_HEAD + _HIRE_BODY + legs) for legs in _HIRE_LEGS]
+    back = [grow(_HIRE_BACK_HEAD + _HIRE_BACK_BODY + legs) for legs in _HIRE_LEGS]
+    side = [grow(_HIRE_SIDE + legs) for legs in _HIRE_SIDE_LEGS]
     return {"down": front, "up": back, "right": side}
 
 
@@ -165,9 +179,10 @@ def goat_frames():
 
 
 # ---- the three office menaces (the dragons): 20 wide, drawn as left halves and mirrored ------------------------
-# red: the manager - grey suit, red tie, slicked hair, a smile that doesn't move
-MANAGER = {"K": (26, 24, 28), "H": (40, 36, 40), "S": (224, 190, 166), "s": (188, 152, 130), "W": (240, 240, 232),
-           "G": (98, 102, 114), "g": (72, 76, 88), "R": (168, 40, 44), "B": (20, 20, 22), "e": (30, 30, 34)}
+# red: the manager - a short-sleeved white dress shirt, red tie, close-cropped hair, a smile that doesn't move
+MANAGER = {"K": (22, 18, 18), "H": (28, 22, 20), "S": (122, 80, 56), "s": (98, 62, 44), "W": (238, 238, 230),
+           "w": (196, 198, 194), "G": (84, 88, 98), "g": (62, 66, 76), "R": (168, 40, 44), "B": (18, 18, 20),
+           "e": (20, 16, 16)}
 MANAGER_ART = mirrored("""
 ......KKKK
 .....KHHHH
@@ -182,14 +197,14 @@ MANAGER_ART = mirrored("""
 .....KSKKK
 ......KSSS
 ....KKKWWR
-...KGGGKWR
-..KGGGGGKR
-.KGGGGGGGR
-.KGGKGGGGR
-.KGGKGGGGR
-.KGGKGGGGG
-.KSSKgGGGG
-.KKKKgGGGG
+...KWWWWWR
+..KWWWWWWR
+.KwwKWWWWR
+.KSSKWWWWR
+.KSSKWWWWR
+.KSSKWWWWW
+.KSSKwWWWW
+.KKKKKKKKK
 ....KGGGGK
 ....KgGGGK
 ....KgGGGK
@@ -200,8 +215,11 @@ MANAGER_ART = mirrored("""
 ..........""")
 MANAGER_ROAR = edited(MANAGER_ART, {9: [(4, "KSWWWWWWWWSK")], 10: [(5, "KSKeeeeKSK")],    # the smile opens
                                     10 - 1: [(0, "KSK"), (17, "KSK")],                       # hands up
-                                    11: [(0, "KSK"), (17, "KSK")], 12: [(0, "KGK"), (17, "KGK")],
-                                    19: [(1, "KGG"), (16, "GGK")], 20: [(1, "KGG"), (16, "GGK")]})
+                                    11: [(0, "KSK"), (17, "KSK")], 12: [(0, "KSK"), (17, "KSK")],
+                                    13: [(0, "KwK"), (17, "KwK")],                            # short sleeves
+                                    15: [(1, "KWW"), (16, "WWK")], 16: [(1, "KWW"), (16, "WWK")],
+                                    17: [(1, "KWW"), (16, "WWK")], 18: [(1, "KWW"), (16, "WWK")],
+                                    19: [(1, "KWW"), (16, "WWK")]})
 # yellow: the guard (the coward) - mustard uniform, navy cap, a flashlight
 GUARD = {"K": (26, 24, 26), "N": (38, 46, 72), "n": (60, 70, 100), "S": (204, 166, 138), "Y": (176, 146, 62),
          "y": (138, 112, 46), "Z": (230, 220, 160), "D": (60, 60, 64), "L": (250, 246, 200), "B": (20, 20, 22),
@@ -274,13 +292,18 @@ COUNSELLOR_ROAR = edited(COUNSELLOR_ART, {5: [(5, "KWeWSSWeWK")], 8: [(5, "SKWWW
                                           12: [(0, "KSKCCCCCCKKCCCCCCKSK")]})
 
 
+MENACE_TALLER = {  # torso and leg rows repeated: they tower over the new hire, as Adventure's dragons do
+    "red": (16, 17, 22, 23, 24, 25), "yellow": (11, 13, 15, 20, 21, 22, 23), "green": (12, 19, 20, 21, 22, 23, 24)}
+
+
 def menace_frames():
     out = {}
     for colour, (art, roar, palette) in {"red": (MANAGER_ART, MANAGER_ROAR, MANAGER),
                                          "yellow": (GUARD_ART, GUARD_ROAR, GUARD),
                                          "green": (COUNSELLOR_ART, COUNSELLOR_ROAR, COUNSELLOR)}.items():
-        out[f"dragon_normal_{colour}"] = from_ascii(art, palette)
-        out[f"dragon_roar_{colour}"] = from_ascii(roar, palette)
+        rows = MENACE_TALLER[colour]
+        out[f"dragon_normal_{colour}"] = from_ascii(taller(art, rows), palette)
+        out[f"dragon_roar_{colour}"] = from_ascii(taller(roar, rows), palette)
     return out
 
 
@@ -314,8 +337,8 @@ FKbHHWWWWHHbKF
 FKbbWWWWWWbbKF
 FKKKKKKKKKKKKF
 FFFFFFFFFFFFFF"""  # F: the frame, which flashes like the chalice
-PORTRAIT_COLOURS = {"F": FLASH, "K": (30, 26, 24), "b": (120, 134, 140), "H": (54, 38, 32),
-                    "S": (226, 196, 176), "e": (40, 34, 30), "m": (176, 104, 100), "W": (220, 214, 200)}
+PORTRAIT_COLOURS = {"F": FLASH, "K": (30, 26, 24), "b": (120, 134, 140), "H": (26, 20, 20),
+                    "S": (222, 182, 142), "e": (34, 26, 22), "m": (172, 98, 86), "W": (220, 214, 200)}
 VACUUM = """
 .KK.........
 KHHK........
