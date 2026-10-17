@@ -1,0 +1,30 @@
+{
+  "name": "SKETCHBOOK",
+  "world": {
+    "name": "THE PAGE",
+    "title_small": "SKETCHBOOK",
+    "footer": "DRAW YOUR WAY HOME.",
+    "areas": {
+      "default":             {"name": "THE PAGE"},
+      "meadow":              {"name": "THE OPEN PAGE"},
+      "gold_castle":         {"name": "HOME"},
+      "gold_castle_inside":  {"name": "HIS ROOM"},
+      "labyrinth":           {"name": "THE WOODS", "ink": [60, 150, 72]},
+      "catacombs":           {"name": "THE DARK", "ink": [70, 68, 74]},
+      "white_castle":        {"name": "THE TOWER"},
+      "white_castle_inside": {"name": "TOWER TOP"},
+      "black_castle":        {"name": "THE OLD HOUSE"},
+      "black_castle_inside": {"name": "THE ATTIC"},
+      "black_maze":          {"name": "THE NIGHT", "ink": [70, 68, 74]},
+      "red_maze":            {"name": "THE SCRIBBLES", "ink": [204, 48, 52]},
+      "purple_room":         {"name": "THE CRAYON BOX"},
+      "credit_room":         {"name": "THE CRAYON BOX"}
+    }
+  },
+  "cast": {
+    "name": "THE CRAYON KID",
+    "win_lines": ["HOME AGAIN.", "MOON IN THE WINDOW.", "GOODNIGHT."],
+    "title_cast": ["hero_down_0", "dragon_normal_red"],
+    "foot_gap": 1
+  }
+}

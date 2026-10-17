@@ -1,0 +1,22 @@
+{
+  "_about": "SKETCHBOOK's soundtrack, original: a music box, a wandering tune for the open page, a hush for the dark. Played by Adventure Forever's FM synth (engine/fm.py). Areas -> songs.",
+  "synth": "fm",
+  "areas": {"title": "music-box", "overworld": "the-open-page", "dungeon": "the-dark", "final": "the-scribbles", "win": "goodnight"},
+  "songs": {
+    "music-box": {"bpm": 76, "style": "chime", "loop": true,
+      "chords": "F F Dm Dm Bb Bb C C F F Dm Dm Bb C F F",
+      "melody": "C6 - A5 - F5 - A5 - | C6 - - - D6 - C6 - | A5 - F5 - D5 - F5 - | A5 - - - - - . . | Bb5 - D6 - F6 - D6 - | C6 - - - Bb5 - A5 - | G5 - - - A5 - Bb5 - | G5 - - - - - . . | C6 - A5 - F5 - A5 - | C6 - - - F6 - E6 - | D6 - - - C6 - A5 - | F5 - - - - - . . | Bb5 - A5 - G5 - - - | E5 - F5 - G5 - - - | F5 - - - - - - - | . . . . . . . ."},
+    "the-open-page": {"bpm": 96, "style": "ostinato", "loop": true, "drums": "........h.......",
+      "chords": "C C Am Am F F G G C C Am Am F G C C",
+      "melody": "E5 - G5 - C6 - - - | B5 - G5 - E5 - - - | A5 - - - G5 - E5 - | C5 - - - - - . . | F5 - A5 - C6 - - - | B5 - A5 - G5 - - - | D5 - - - E5 - F5 - | G5 - - - - - . . | E5 - G5 - C6 - - - | D6 - C6 - B5 - - - | A5 - - - C6 - A5 - | E5 - - - - - . . | F5 - - - A5 - - - | G5 - - - B5 - - - | C6 - - - - - - - | . . . . . . . ."},
+    "the-dark": {"bpm": 54, "style": "drone", "loop": true,
+      "chords": "Dm Dm Dm Dm Bb Bb A A",
+      "melody": ". . . . . . . . | A5 - - - - - - - | . . . . . . . . | . . F5 - E5 - - - | . . . . . . . . | D5 - - - - - - - | . . . . . . . . | C#5 - - - - - - -"},
+    "the-scribbles": {"bpm": 112, "style": "ostinato", "loop": true, "drums": "k...s...k.k.s...",
+      "chords": "Em Em C C Em Em B B",
+      "melody": "E5 - G5 - B5 - G5 - | E5 - - - . . . . | C5 - E5 - G5 - E5 - | C5 - - - . . . . | E5 - G5 - B5 - E6 - | D6 - B5 - G5 - - - | F#5 - - - D#5 - - - | B4 - - - - - - -"},
+    "goodnight": {"bpm": 66, "style": "chime", "loop": false,
+      "chords": "F Bb C F",
+      "melody": "A5 - - - C6 - - - | D6 - - - F6 - - - | E6 - D6 - C6 - - - | F6 - - - - - - -"}
+  }
+}

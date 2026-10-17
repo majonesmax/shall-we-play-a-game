@@ -7,6 +7,7 @@ the game) and a world (where it happens) that any of Adventure Forever's looks c
 | Demo | |
 |---|---|
 | **[ORIENTATION](packs/orientation)**<br>best in the VGA look | an office floor that goes on too long: off-white corridors, dim green carpet, flickering fluorescent light, departments behind elevator doors, a goat, and its own FM soundtrack<br><br><a href="packs/orientation"><img src="docs/media/orientation.png" alt="ORIENTATION in the VGA look: the Records filing cabinets, the lobby, the Wellness suite"></a> |
+| **[SKETCHBOOK](packs/sketchbook)**<br>best in the paper look | a blank page, and only what a boy in striped pyjamas has drawn on it in purple crayon: wobbly walls, his house with the lights on, the things he drew that got out of hand, a moon to bring home, and a music-box soundtrack<br><br><a href="packs/sketchbook"><img src="docs/media/sketchbook.png" alt="SKETCHBOOK in the paper look: the title, the tower, the open page"></a> |
 
 ## Playing a demo
 
@@ -15,16 +16,17 @@ the game) and a world (where it happens) that any of Adventure Forever's looks c
 1. Download this repository: **Code → Download ZIP** at the top of this page.
 2. Start Adventure Forever, and **drag the downloaded zip onto the game window** (or the unzipped folder).
    Every demo in it is added, and the first one starts. They stay added for next time.
-3. Press **L** for the VGA look (*ORIENTATION* is made for it), **C** / **W** to change cast and world, **H**
-   for every key.
+3. Press **L** to change the look - *ORIENTATION* is made for VGA, *SKETCHBOOK* for paper (Adventure Forever
+   1.2 or later) - **C** / **W** to change cast and world, **H** for every key.
 
-The demos include a little code (`world/world.py` paints ORIENTATION's rooms) - it only draws pictures.
+The demos include a little code (each `world/world.py` paints its world's rooms) - it only draws pictures.
 
 **From source** - with [Adventure Forever](https://github.com/majonesmax/adventure-forever#running-it-from-source-macos-windows-linux)
 set up, point it at this repository's `packs` folder:
 
 ```sh
 ADVENTURE_PACKS=../shall-we-play-a-game/packs python play.py --pack orientation --look vga
+ADVENTURE_PACKS=../shall-we-play-a-game/packs python play.py --pack sketchbook --look paper
 ```
 
 (Windows PowerShell: `$env:ADVENTURE_PACKS="..\shall-we-play-a-game\packs"; python play.py --pack orientation --look vga`.)
