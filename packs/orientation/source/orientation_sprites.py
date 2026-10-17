@@ -252,9 +252,25 @@ GUARD_ART = mirrored("""
 ....KyYYYK
 ...KBBBBBK
 ..........""")
-GUARD_ROAR = edited(GUARD_ART, {5: [(3, "KSeeSSSSeeSK")], 8: [(4, "KSKKKKKKSK")], 9: [(5, "KSKKKKSK")],
-                                16: [(0, "KLKKKYYYYYYYYYYKKKLK")], 17: [(0, "KLKKKYYYYYYYYYYKKKLK")],
-                                18: [(0, "KDKKKyyyyyyyyyyKKKDK")], 19: [(0, "KDDKYYYYYYYYYYYYKDDK")]})
+GUARD_ROAR = edited(GUARD_ART, {  # the coward surrenders: hands up, flashlights dropped, eyes wide
+    1: [(0, 'KSK'), (17, 'KSK')],
+    2: [(0, 'KSK'), (17, 'KSK')],
+    3: [(0, 'KSK'), (17, 'KSK')],
+    4: [(0, 'KYK'), (17, 'KYK')],
+    5: [(0, 'KYK'), (17, 'KYK'), (3, 'KSeeSSSSeeSK')],
+    6: [(0, 'KYK'), (17, 'KYK')],
+    7: [(0, 'KYK'), (17, 'KYK')],
+    8: [(4, 'KSSSSKKSSSSK')],
+    9: [(5, 'KSSSKKSSSK')],
+    10: [(0, 'KYK'), (17, 'KYK')],
+    11: [(0, 'KYK'), (17, 'KYK')],
+    14: [(0, '....'), (16, '....')],
+    15: [(0, '....'), (16, '....')],
+    16: [(0, '....'), (16, '....')],
+    17: [(0, '....'), (16, '....')],
+    18: [(0, '....'), (16, '....')],
+    19: [(0, '....'), (16, '....')],
+})
 # green: the counsellor - auburn bob, green cardigan, a clipboard held close
 COUNSELLOR = {"K": (26, 24, 28), "H": (120, 64, 44), "h": (92, 48, 34), "S": (226, 194, 172), "C": (86, 126, 92),
               "c": (64, 98, 70), "W": (238, 236, 228), "P": (196, 186, 160), "p": (150, 122, 84),

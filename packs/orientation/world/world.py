@@ -4,6 +4,7 @@ baseboards, a dim green carpet, pools of fluorescent light from ceiling panels y
 
 Every place shares the corridor style; pack.json gives each place its name and a tint (areas[place]["tint"]).
 The castle gates are elevator doors: the gate's opening (its height in the game) slides two doors apart.
+Now and then a room's fluorescent lights stutter (lighting()).
 """
 
 import numpy as np
@@ -55,7 +56,15 @@ def elevator(w, h, finish):
     return out
 
 
+FLICKER = {0: 0.72, 1: 0.72, 2: 0.72, 5: 0.82, 6: 0.82, 11: 0.76}  # frames into a stutter -> how lit
+
+
 class CustomWorld(World):
+    def lighting(self, room_num, frame_no):
+        """Every 7-13 s (it differs room to room) the lights stutter: a dip, back, two shorter dips."""
+        period = 420 + (room_num * 97) % 360
+        return FLICKER.get((frame_no + room_num * 53) % period, 1.0)
+
     def gate(self, castle, w, h):
         return elevator(w, h, DOOR_FINISH[castle]) if h > 0 else None
 
