@@ -1,0 +1,99 @@
+"""ORIENTATION's world: an office floor that goes on too long - off-white corridors with panel seams and
+baseboards, a dim green carpet, pools of fluorescent light from ceiling panels you never see. Painted in code
+(full colour; the look reduces it - the VGA look dithers the light pools).
+
+Every place shares the corridor style; pack.json gives each place its name and a tint (areas[place]["tint"]).
+The castle gates are elevator doors: the gate's opening (its height in the game) slides two doors apart.
+"""
+
+import numpy as np
+
+from content.world import World, area
+from shared import layout as L
+
+CARPET = np.array([54, 76, 64], float)       # dim green
+WALL_TOP = np.array([178, 184, 176], float)  # off-white, in the gloom
+SEAM = 0.88                                  # panel seams on the wall tops
+FACE = 0.58                                  # the wall's front face, toward the viewer
+EDGE = np.array([96, 102, 98], float)        # the line along a wall's top edge
+BASEBOARD = np.array([78, 84, 80], float)
+LIGHT = np.array([255, 250, 228], float)     # the fluorescent pools: a touch warm
+PANEL_GRID = (48, 40)                        # ceiling panels: every 48 px across, 40 down
+GATE_SHUT, GATE_OPEN = 32, 8                 # the game's gate height (px) shut, and just before it's gone
+DOOR_FINISH = {"gold": (176, 150, 92), "white": (214, 216, 210), "black": (74, 78, 84)}  # brass, enamel, steel
+
+
+def light_pools(h, w):
+    """0..1: soft pools of light on a grid, as from ceiling panels."""
+    yy, xx = np.mgrid[0:h, 0:w].astype(float)
+    gx, gy = PANEL_GRID
+    dx = ((xx - gx / 2) % gx) - gx / 2
+    dy = ((yy - gy / 2) % gy) - gy / 2
+    return np.exp(-(dx ** 2 / (2 * 12.0 ** 2) + dy ** 2 / (2 * 9.0 ** 2)))
+
+
+def elevator(w, h, finish):
+    """Elevator doors for a gate h px tall in the game (GATE_SHUT = shut): always drawn full height, anchored
+    at the top of the doorway (padding above keeps them still while the game's gate box shrinks), the gap
+    between the two doors widening as the gate opens. RGBA."""
+    door_h, frame_w = GATE_SHUT, w + 6
+    opening = min(1.0, max(0.0, (GATE_SHUT - h) / (GATE_SHUT - GATE_OPEN)))
+    out = np.zeros((2 * GATE_SHUT - h, frame_w, 4), np.uint8)
+    top = GATE_SHUT - h
+    finish = np.array(finish, float)
+    door = out[top:top + door_h]
+    door[:, :] = (28, 30, 32, 255)                                 # the frame, and the dark shaft behind
+    inner = frame_w - 4
+    leaf = int(round(inner / 2 * (1 - opening)))                   # each door's visible width
+    for x0, x1 in ((2, 2 + leaf), (2 + inner - leaf, 2 + inner)):
+        if x1 <= x0:
+            continue
+        shade = np.linspace(1.08, 0.82, x1 - x0)                   # brushed metal: lit from the left
+        door[2:door_h - 1, x0:x1, :3] = np.clip(finish[None, None] * shade[None, :, None], 0, 255)
+        door[2:door_h - 1, x0:x1, 3] = 255
+    door[1, 1:frame_w - 1] = (120, 124, 128, 255)                  # the lintel
+    return out
+
+
+class CustomWorld(World):
+    def gate(self, castle, w, h):
+        return elevator(w, h, DOOR_FINISH[castle]) if h > 0 else None
+
+    def tint(self, room_num):
+        t = self.setting(area(room_num), "tint")
+        return np.array(t if t else (1.0, 1.0, 1.0), float)
+
+    def room(self, room):
+        n = room["room"]
+        if n in self.rooms:
+            return self.rooms[n]
+        m = L.wall_mask(room)
+        h, w = m.shape
+        rng = np.random.default_rng(n)
+        tint = self.tint(n)
+        # the carpet: a low, even weave, lit in pools
+        weave = rng.normal(0, 3.0, (h, w))
+        weave += 2.0 * ((np.arange(w)[None, :] + np.arange(h)[:, None]) % 4 == 0)
+        pools = light_pools(h, w)
+        floor = CARPET[None, None] * tint + weave[..., None]
+        floor = floor * (0.55 + 0.45 * pools[..., None]) + (LIGHT - CARPET)[None, None] * 0.12 * pools[..., None]
+        img = floor.copy()
+        # the walls: off-white tops with panel seams, a darker front face where the floor is below, a baseboard
+        yy, xx = np.mgrid[0:h, 0:w]
+        top = np.broadcast_to(WALL_TOP * tint, (h, w, 3)).copy()
+        top[(xx % 24 == 0)] *= SEAM
+        top += rng.normal(0, 1.5, (h, w))[..., None]
+        img[m] = top[m]
+        above_floor = [~np.roll(m, -k, axis=0) for k in range(1, 7)]
+        face = m & np.logical_or.reduce(above_floor)
+        img[face] = (WALL_TOP * tint * FACE)
+        edge = m & ~(np.roll(m, 1, 0) & np.roll(m, -1, 0) & np.roll(m, 1, 1) & np.roll(m, -1, 1)) & ~face
+        img[edge] = EDGE * tint
+        base = m & ~np.roll(m, -1, axis=0) | m & ~np.roll(m, -2, axis=0)
+        img[base] = BASEBOARD
+        # a soft shadow on the carpet below each wall
+        for k, dim in ((1, 0.62), (2, 0.72), (3, 0.82), (4, 0.9)):
+            below = ~m & np.roll(m, k, axis=0)
+            img[below] *= dim
+        self.rooms[n] = np.clip(img, 0, 255).astype(np.uint8)
+        return self.rooms[n]
