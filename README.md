@@ -6,7 +6,7 @@ the game) and a world (where it happens) that any of Adventure Forever's looks c
 
 | Demo | |
 |---|---|
-| **[ORIENTATION](packs/orientation)**<br>best in the VGA look | an office floor that goes on too long: off-white corridors, dim green carpet, flickering fluorescent light, departments behind elevator doors, a goat, and its own FM soundtrack<br><br><a href="packs/orientation"><img src="docs/media/orientation.png" alt="ORIENTATION in the VGA look: the Records filing cabinets, the lobby, the Wellness suite"></a> |
+| **[ORIENTATION](packs/orientation)**<br>best in the VGA look | an office floor that goes on too long: off-white corridors, dim green carpet, flickering fluorescent light, departments behind elevator doors, a goat, and its own FM soundtrack<br><br>▶️ **[Watch it played through on YouTube](https://youtu.be/t0TFnZ-mORw)** (1:44)<br><br><a href="packs/orientation"><img src="docs/media/orientation.png" alt="ORIENTATION in the VGA look: the Records filing cabinets, the lobby, the Wellness suite"></a> |
 | **[SKETCHBOOK](packs/sketchbook)**<br>best in the paper look | a blank page, and only what a boy in striped pyjamas has drawn on it in purple crayon: wobbly walls, his house with the lights on, the things he drew that got out of hand, a moon to bring home, and a music-box soundtrack<br><br><a href="packs/sketchbook"><img src="docs/media/sketchbook.png" alt="SKETCHBOOK in the paper look: the title, the tower, the open page"></a> |
 
 ## Playing a demo
