@@ -1,5 +1,5 @@
-"""SKETCHBOOK's cast, drawn as text (one character per pixel, "." transparent): a boy in striped pyjamas with a
-purple crayon, the things he drew that got out of hand, and what he drew along the way.
+"""SKETCHBOOK's cast, drawn as text (one character per pixel, "." transparent): a boy in striped pyjamas with
+a purple crayon, the things he drew that got out of hand, and what he drew along the way.
 
 The boy is real, so he's coloured in. Everything else he drew - so it's a crayon outline on paper ("o" is the
 paper inside a drawing), scribbled in here and there.
@@ -10,6 +10,7 @@ Usage: python packs/sketchbook/source/sketchbook_sprites.py   (from the Adventur
 
 import os
 import sys
+from typing import Mapping
 
 import numpy as np
 from PIL import Image
@@ -22,23 +23,26 @@ for root in (os.environ.get("ADVENTURE_FOREVER", ""), *(os.path.join(HERE, "..",
         break
 from content.pictures import FLASH, save_folder  # noqa: E402
 from shared.pixelart import edited, from_ascii as _from_ascii  # noqa: E402
+from shared.types import Picture, Rgb  # noqa: E402
+
+Palette = Mapping[str, Rgb | None]   # a text art character -> its colour (None: see-through)
 
 PAPER = (246, 240, 226)
 PURPLE, PURPLE_DARK = (112, 64, 168), (78, 40, 124)
 
 
-def from_ascii(art, colours):
+def from_ascii(art: str, colours: Palette) -> Picture:
     return _from_ascii(pad(art), {"o": PAPER, **colours}, strict=True)
 
 
-def pad(art):
+def pad(art: str) -> str:
     """Text art with every row right-padded with "." to the widest - so hand-drawn rows needn't be counted."""
     rows = art.strip("\n").split("\n")
-    width = max(len(r) for r in rows)
-    return "\n" + "\n".join(r.ljust(width, ".") for r in rows)
+    width = max(len(row) for row in rows)
+    return "\n" + "\n".join(row.ljust(width, ".") for row in rows)
 
 
-def taller(art, rows):
+def taller(art: str, rows: tuple[int, ...]) -> str:
     """Text art with the listed rows repeated (rows numbered from 0, after padding)."""
     lines = pad(art).strip("\n").split("\n")
     out = []
@@ -47,7 +51,7 @@ def taller(art, rows):
     return "\n" + "\n".join(out)
 
 
-# ---- the boy (the hero): tousled brown hair, blue-and-white striped pyjamas, bare feet, his crayon -----------
+# ---- the boy (the hero): tousled brown hair, blue-and-white striped pyjamas, bare feet, his crayon ---------
 BOY = {"K": (44, 34, 48), "H": (128, 80, 48), "h": (96, 58, 34), "S": (238, 196, 164), "s": (206, 158, 128),
        "m": (184, 92, 92), "P": (96, 150, 216), "W": (250, 250, 246), "V": PURPLE, "v": PURPLE_DARK}
 _BOY_HEAD = """
@@ -133,16 +137,18 @@ _BOY_SIDE_LEGS = ["""
 BOY_TALLER = (12, 13)  # the pyjama top: a little longer
 
 
-def boy_frames():
-    grow = lambda art: from_ascii(taller(art, BOY_TALLER), BOY)
+def boy_frames() -> dict[str, list[Picture]]:
+    def grow(art: str) -> Picture:
+        return from_ascii(taller(art, BOY_TALLER), BOY)
     front = [grow(_BOY_HEAD + _BOY_BODY + legs) for legs in _BOY_LEGS]
     back = [grow(_BOY_BACK_HEAD + _BOY_BACK_BODY + legs) for legs in _BOY_LEGS]
     side = [grow(_BOY_SIDE + legs) for legs in _BOY_SIDE_LEGS]
     return {"down": front, "up": back, "right": side}
 
 
-# ---- the things he drew (the dragons): outlines on paper, scribbled in ------------------------------------------
-# red: a crayon dragon. yellow (the coward): a lumpy monster that throws up its arms. green: a scribble with teeth.
+# ---- the things he drew (the dragons): outlines on paper, scribbled in -------------------------------------
+# red: a crayon dragon. yellow (the coward): a lumpy monster that throws up its arms. green: a scribble with
+# teeth.
 DRAGON = """
 ..RRRR..............
 .RooooR.............
@@ -239,7 +245,7 @@ VILLAINS = {
 }
 
 
-def villain_frames():
+def villain_frames() -> dict[str, Picture]:
     out = {}
     for colour, (art, roar, rows, palette) in VILLAINS.items():
         out[f"dragon_normal_{colour}"] = from_ascii(taller(art, rows), palette)
@@ -247,7 +253,7 @@ def villain_frames():
     return out
 
 
-# ---- the bird (the bat, the thief): long neck, long legs, two frames (wings up / down) ---------------------------
+# ---- the bird (the bat, the thief): long neck, long legs, two frames (wings up / down) ---------------------
 BIRD_UP = """
 B..........B......
 BB........BB......
@@ -272,7 +278,7 @@ B....BB.B.B.......
 BIRD = {"B": (240, 128, 48), "E": (34, 30, 36), "v": (250, 210, 60)}
 
 
-# ---- what he drew along the way --------------------------------------------------------------------------------
+# ---- what he drew along the way ----------------------------------------------------------------------------
 CRAYON = """
 .....KKKKKKKKKKKK.
 ..KKVVwwVVVVVwwVVK
@@ -346,8 +352,9 @@ ASLEEP_COLOURS = {"K": (44, 34, 48), "W": (250, 250, 246), "H": (128, 80, 48), "
                   "P": PURPLE}
 
 
-def item_pictures():
-    out = {"item_sword": from_ascii(CRAYON, CRAYON_COLOURS), "item_chalice": from_ascii(WINDOW, WINDOW_COLOURS),
+def item_pictures() -> dict[str, Picture]:
+    out = {"item_sword": from_ascii(CRAYON, CRAYON_COLOURS),
+           "item_chalice": from_ascii(WINDOW, WINDOW_COLOURS),
            "item_magnet": from_ascii(MAGNET, MAGNET_COLOURS),
            "bridge_top": from_ascii(LADDER_TOP, LADDER), "bridge_middle": from_ascii(LADDER_MID, LADDER),
            "bridge_bottom": from_ascii(LADDER_BOTTOM, LADDER)}
@@ -358,7 +365,7 @@ def item_pictures():
     return out
 
 
-def pictures():
+def pictures() -> dict[str, Picture]:
     out = {}
     for view, frames in boy_frames().items():
         for i, frame in enumerate(frames):
@@ -369,26 +376,27 @@ def pictures():
     return out
 
 
-def cast_sheet(path, scale=5, per_row=13):
+def cast_sheet(path: str, scale: int = 5, per_row: int = 13) -> str:
     """Every picture on paper, scaled up, in rows (the flashing marker shown in one of its colours)."""
     pics = list(pictures().items())
     pics.append(("hero_left_0", pictures()["hero_right_0"][:, ::-1]))
-    hmax = max(p.shape[0] for _, p in pics) + 4
+    hmax = max(picture.shape[0] for _, picture in pics) + 4
     cells = []
-    for _, p in pics:
-        p = p.copy()
-        p[np.all(p[..., :3] == FLASH, axis=2), :3] = (112, 64, 168)
-        cell = np.zeros((hmax, p.shape[1] + 6, 3), np.uint8)
+    for _, picture in pics:
+        picture = picture.copy()
+        picture[np.all(picture[..., :3] == FLASH, axis=2), :3] = (112, 64, 168)
+        cell = np.zeros((hmax, picture.shape[1] + 6, 3), np.uint8)
         cell[:] = (226, 218, 200)
-        a = p[..., 3:4] > 0
-        sub = cell[hmax - p.shape[0] - 2:hmax - 2, 3:3 + p.shape[1]]
-        cell[hmax - p.shape[0] - 2:hmax - 2, 3:3 + p.shape[1]] = np.where(a, p[..., :3], sub)
+        opaque = picture[..., 3:4] > 0
+        spot = cell[hmax - picture.shape[0] - 2:hmax - 2, 3:3 + picture.shape[1]]
+        spot[:] = np.where(opaque, picture[..., :3], spot)
         cells.append(cell)
     rows = [np.concatenate(cells[i:i + per_row], axis=1) for i in range(0, len(cells), per_row)]
-    width = max(r.shape[1] for r in rows)
-    sheet = np.concatenate([np.pad(r, ((0, 2), (0, width - r.shape[1]), (0, 0))) for r in rows], axis=0)
+    width = max(row.shape[1] for row in rows)
+    sheet = np.concatenate([np.pad(row, ((0, 2), (0, width - row.shape[1]), (0, 0))) for row in rows], axis=0)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    Image.fromarray(sheet).resize((sheet.shape[1] * scale, sheet.shape[0] * scale), Image.NEAREST).save(path)
+    scaled_size = (sheet.shape[1] * scale, sheet.shape[0] * scale)
+    Image.fromarray(sheet).resize(scaled_size, Image.Resampling.NEAREST).save(path)
     return path
 
 

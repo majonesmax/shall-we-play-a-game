@@ -1,0 +1,7 @@
+{
+  "include": ["packs", "tools"],
+  "exclude": ["**/__pycache__", "shots"],
+  "extraPaths": ["../adventure-forever", "../adventure-nes"],
+  "pythonVersion": "3.10",
+  "typeCheckingMode": "basic"
+}

@@ -1,0 +1,6 @@
+# The code checks (tools/readability.py, ruff.toml, pyrightconfig.json). The packs also use Adventure
+# Forever's code, from its folder beside this one (../adventure-forever or ../adventure-nes).
+numpy>=2.0
+pillow>=10.0
+ruff==0.17.1
+pyright==1.1.414

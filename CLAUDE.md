@@ -43,6 +43,24 @@ python play.py --pack <name> --look <look>                             # play it
 - Each demo is made for one look (its row in the README says which) but must be playable in all of them.
 - Code is MIT and art is CC BY 4.0. Only add art you made, or made here as text art.
 
+## Readable code
+
+The same rules as Adventure Forever's ([its CLAUDE.md](https://github.com/majonesmax/adventure-forever/blob/main/CLAUDE.md),
+"Readable code"): names that say what things are, one idea per line, named numbers, short functions, types
+on every signature (`Picture`, `Mask`, `Floats`, `Rgb`... from its `shared/types.py`), lines up to 110
+characters.
+
+```sh
+ruff check --config ruff.toml .     # the readability rules
+pyright                             # the type hints (pyrightconfig.json finds Adventure Forever beside this)
+python tools/readability.py         # ...both, and no short names; every file is at zero - keep it there
+```
+
+The tools come from `requirements-dev.txt`, or from Adventure Forever's `.venv`, which readability.py finds
+by itself. `.claude/settings.json` runs readability.py after every edit, and GitHub runs all three on every
+push (`.github/workflows/checks.yml`). A tidy-up must not change the art: the cast scripts must regenerate
+the same PNGs (`git status` shows none changed), and the worlds must paint the same rooms.
+
 ## Adding a demo to the README
 
 A row in the table: the name linked to its folder, the look it's best in, one sentence, and a screenshot in

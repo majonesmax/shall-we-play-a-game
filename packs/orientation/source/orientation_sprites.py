@@ -7,6 +7,7 @@ Usage: python packs/orientation/source/orientation_sprites.py   (from the Advent
 
 import os
 import sys
+from typing import Mapping
 
 import numpy as np
 from PIL import Image
@@ -19,13 +20,16 @@ for root in (os.environ.get("ADVENTURE_FOREVER", ""), *(os.path.join(HERE, "..",
         break
 from content.pictures import FLASH, save_folder  # noqa: E402
 from shared.pixelart import edited, from_ascii as _from_ascii, mirrored  # noqa: E402
+from shared.types import Picture, Rgb  # noqa: E402
+
+Palette = Mapping[str, Rgb | None]   # a text art character -> its colour (None: see-through)
 
 
-def from_ascii(art, colours):
+def from_ascii(art: str, colours: Palette) -> Picture:
     return _from_ascii(pad(art), colours, strict=True)
 
 
-def taller(art, rows):
+def taller(art: str, rows: tuple[int, ...]) -> str:
     """Text art with the listed rows repeated - a longer torso, longer legs - so a figure grows without being
     redrawn (rows numbered from 0, after padding)."""
     lines = pad(art).strip("\n").split("\n")
@@ -35,17 +39,17 @@ def taller(art, rows):
     return "\n" + "\n".join(out)
 
 
-def pad(art):
+def pad(art: str) -> str:
     """Text art with every row right-padded with "." to the widest - so hand-drawn rows needn't be counted."""
     rows = art.strip("\n").split("\n")
-    width = max(len(r) for r in rows)
-    return "\n" + "\n".join(r.ljust(width, ".") for r in rows)
+    width = max(len(row) for row in rows)
+    return "\n" + "\n".join(row.ljust(width, ".") for row in rows)
 
 
-# ---- the new hire (the hero): 16 wide, a white shirt and a navy tie, a lanyard -------------------------------
-HIRE = {"K": (28, 26, 30), "H": (58, 44, 38), "S": (218, 186, 160), "s": (186, 150, 126), "W": (232, 232, 224),
-        "w": (190, 194, 190), "T": (44, 56, 92), "P": (72, 74, 82), "p": (52, 54, 60), "L": (84, 132, 116),
-        "C": (236, 236, 228), "B": (24, 24, 26)}
+# ---- the new hire (the hero): 16 wide, a white shirt and a navy tie, a lanyard -----------------------------
+HIRE = {"K": (28, 26, 30), "H": (58, 44, 38), "S": (218, 186, 160), "s": (186, 150, 126),
+        "W": (232, 232, 224), "w": (190, 194, 190), "T": (44, 56, 92), "P": (72, 74, 82), "p": (52, 54, 60),
+        "L": (84, 132, 116), "C": (236, 236, 228), "B": (24, 24, 26)}
 _HIRE_HEAD = """
 ................
 .....KKKKKK.....
@@ -135,17 +139,18 @@ _HIRE_SIDE_LEGS = ["""
 HIRE_TALLER = (12, 17, 19, 20)  # the shirt and the legs: 24 -> 28 rows
 
 
-def hire_frames():
-    grow = lambda art: from_ascii(taller(art, HIRE_TALLER), HIRE)
+def hire_frames() -> dict[str, list[Picture]]:
+    def grow(art: str) -> Picture:
+        return from_ascii(taller(art, HIRE_TALLER), HIRE)
     front = [grow(_HIRE_HEAD + _HIRE_BODY + legs) for legs in _HIRE_LEGS]
     back = [grow(_HIRE_BACK_HEAD + _HIRE_BACK_BODY + legs) for legs in _HIRE_LEGS]
     side = [grow(_HIRE_SIDE + legs) for legs in _HIRE_SIDE_LEGS]
     return {"down": front, "up": back, "right": side}
 
 
-# ---- the goat (the bat, the thief): white and grey, curled horns, two frames (head up / head down) ------------
-GOAT = {"K": (30, 28, 26), "G": (226, 222, 210), "g": (182, 178, 166), "N": (124, 110, 90), "E": (196, 160, 60),
-        "e": (40, 34, 30), "P": (210, 170, 160), "b": (200, 196, 186)}
+# ---- the goat (the bat, the thief): white and grey, curled horns, two frames (head up / head down) ---------
+GOAT = {"K": (30, 28, 26), "G": (226, 222, 210), "g": (182, 178, 166), "N": (124, 110, 90),
+        "E": (196, 160, 60), "e": (40, 34, 30), "P": (210, 170, 160), "b": (200, 196, 186)}
 GOAT_UP = """
 ...KKK.KKK........
 ..KNNK.KNNK.......
@@ -175,11 +180,11 @@ GOAT_DOWN = """
 ...K..............."""
 
 
-def goat_frames():
+def goat_frames() -> dict[str, Picture]:
     return {"up": from_ascii(GOAT_UP, GOAT), "down": from_ascii(GOAT_DOWN, GOAT)}
 
 
-# ---- the three office menaces (the dragons): 20 wide, drawn as left halves and mirrored ------------------------
+# ---- the three office menaces (the dragons): 20 wide, drawn as left halves and mirrored --------------------
 # red: the manager - a short-sleeved white dress shirt, red tie, close-cropped hair, a smile that doesn't move
 MANAGER = {"K": (22, 18, 18), "H": (28, 22, 20), "S": (122, 80, 56), "s": (98, 62, 44), "W": (238, 238, 230),
            "w": (196, 198, 194), "G": (84, 88, 98), "g": (62, 66, 76), "R": (168, 40, 44), "B": (18, 18, 20),
@@ -223,8 +228,8 @@ MANAGER_ROAR = edited(MANAGER_ART, {9: [(4, "KSWWWWWWWWSK")], 10: [(5, "KSKeeeeK
                                     19: [(1, "KWW"), (16, "WWK")]})
 # yellow: the guard (the coward) - mustard uniform, navy cap, a flashlight
 GUARD = {"K": (26, 24, 26), "N": (38, 46, 72), "n": (60, 70, 100), "S": (204, 166, 138), "Y": (176, 146, 62),
-         "y": (138, 112, 46), "Z": (230, 220, 160), "D": (60, 60, 64), "L": (250, 246, 200), "B": (20, 20, 22),
-         "e": (30, 30, 34)}
+         "y": (138, 112, 46), "Z": (230, 220, 160), "D": (60, 60, 64), "L": (250, 246, 200),
+         "B": (20, 20, 22), "e": (30, 30, 34)}
 GUARD_ART = mirrored("""
 ....KKKKKK
 ...KNNNNNN
@@ -273,9 +278,9 @@ GUARD_ROAR = edited(GUARD_ART, {  # the coward surrenders: hands up, flashlights
     19: [(0, '....'), (16, '....')],
 })
 # green: the counsellor - auburn bob, green cardigan, a clipboard held close
-COUNSELLOR = {"K": (26, 24, 28), "H": (120, 64, 44), "h": (92, 48, 34), "S": (226, 194, 172), "C": (86, 126, 92),
-              "c": (64, 98, 70), "W": (238, 236, 228), "P": (196, 186, 160), "p": (150, 122, 84),
-              "B": (40, 34, 30), "e": (30, 30, 34)}
+COUNSELLOR = {"K": (26, 24, 28), "H": (120, 64, 44), "h": (92, 48, 34), "S": (226, 194, 172),
+              "C": (86, 126, 92), "c": (64, 98, 70), "W": (238, 236, 228), "P": (196, 186, 160),
+              "p": (150, 122, 84), "B": (40, 34, 30), "e": (30, 30, 34)}
 COUNSELLOR_ART = mirrored("""
 .....KKKKK
 ....KHHHHH
@@ -310,10 +315,11 @@ COUNSELLOR_ROAR = edited(COUNSELLOR_ART, {5: [(5, "KWeWSSWeWK")], 8: [(5, "SKWWW
 
 
 MENACE_TALLER = {  # torso and leg rows repeated: they tower over the new hire, as Adventure's dragons do
-    "red": (16, 17, 22, 23, 24, 25), "yellow": (11, 13, 15, 20, 21, 22, 23), "green": (12, 19, 20, 21, 22, 23, 24)}
+    "red": (16, 17, 22, 23, 24, 25), "yellow": (11, 13, 15, 20, 21, 22, 23),
+    "green": (12, 19, 20, 21, 22, 23, 24)}
 
 
-def menace_frames():
+def menace_frames() -> dict[str, Picture]:
     out = {}
     for colour, (art, roar, palette) in {"red": (MANAGER_ART, MANAGER_ROAR, MANAGER),
                                          "yellow": (GUARD_ART, GUARD_ROAR, GUARD),
@@ -324,7 +330,7 @@ def menace_frames():
     return out
 
 
-# ---- things on the floor ----------------------------------------------------------------------------------------
+# ---- things on the floor -----------------------------------------------------------------------------------
 LETTER_OPENER = """
 .KK.............
 KWWKKKKKKKKKKK..
@@ -401,13 +407,18 @@ SPEAKER_COLOURS = [{"K": (26, 26, 30), "D": (60, 62, 70), "G": (90, 200, 120), "
                    {"K": (26, 26, 30), "D": (60, 62, 70), "G": (40, 80, 54), "b": (110, 84, 60)}]  # lit, dim
 
 
-def item_pictures():
-    out = {"item_sword": from_ascii(LETTER_OPENER, OPENER), "item_chalice": from_ascii(PORTRAIT, PORTRAIT_COLOURS),
+SHADED = 0.75   # a keycard's edge: its colour, darker
+
+
+def item_pictures() -> dict[str, Picture]:
+    out = {"item_sword": from_ascii(LETTER_OPENER, OPENER),
+           "item_chalice": from_ascii(PORTRAIT, PORTRAIT_COLOURS),
            "item_magnet": from_ascii(VACUUM, VACUUM_COLOURS),
            "bridge_top": from_ascii(TABLE_TOP, TABLE), "bridge_middle": from_ascii(TABLE_MID, TABLE),
            "bridge_bottom": from_ascii(TABLE_BOTTOM, TABLE)}
     for name, colour in KEYCARDS.items():
-        shade = tuple(int(v * 0.75) for v in colour)
+        red, green, blue = colour
+        shade = (int(red * SHADED), int(green * SHADED), int(blue * SHADED))
         out[f"item_{name}"] = from_ascii(KEYCARD, {"K": (28, 26, 30), "C": colour, "s": (200, 176, 96),
                                                     "D": shade})
     for i, colours in enumerate(SPEAKER_COLOURS):
@@ -415,7 +426,7 @@ def item_pictures():
     return out
 
 
-def pictures():
+def pictures() -> dict[str, Picture]:
     out = {}
     for view, frames in hire_frames().items():
         for i, frame in enumerate(frames):
@@ -427,26 +438,27 @@ def pictures():
     return out
 
 
-def cast_sheet(path, scale=5, per_row=13):
+def cast_sheet(path: str, scale: int = 5, per_row: int = 13) -> str:
     """Every picture on carpet, scaled up, in rows (the flashing marker shown in one of its colours)."""
     pics = list(pictures().items())
     pics.append(("hero_left_0", pictures()["hero_right_0"][:, ::-1]))
-    hmax = max(p.shape[0] for _, p in pics) + 4
+    hmax = max(picture.shape[0] for _, picture in pics) + 4
     cells = []
-    for _, p in pics:
-        p = p.copy()
-        p[np.all(p[..., :3] == FLASH, axis=2), :3] = (200, 168, 80)
-        cell = np.zeros((hmax, p.shape[1] + 6, 3), np.uint8)
+    for _, picture in pics:
+        picture = picture.copy()
+        picture[np.all(picture[..., :3] == FLASH, axis=2), :3] = (200, 168, 80)
+        cell = np.zeros((hmax, picture.shape[1] + 6, 3), np.uint8)
         cell[:] = (54, 76, 64)
-        a = p[..., 3:4] > 0
-        sub = cell[hmax - p.shape[0] - 2:hmax - 2, 3:3 + p.shape[1]]
-        cell[hmax - p.shape[0] - 2:hmax - 2, 3:3 + p.shape[1]] = np.where(a, p[..., :3], sub)
+        opaque = picture[..., 3:4] > 0
+        spot = cell[hmax - picture.shape[0] - 2:hmax - 2, 3:3 + picture.shape[1]]
+        spot[:] = np.where(opaque, picture[..., :3], spot)
         cells.append(cell)
     rows = [np.concatenate(cells[i:i + per_row], axis=1) for i in range(0, len(cells), per_row)]
-    width = max(r.shape[1] for r in rows)
-    sheet = np.concatenate([np.pad(r, ((0, 2), (0, width - r.shape[1]), (0, 0))) for r in rows], axis=0)
+    width = max(row.shape[1] for row in rows)
+    sheet = np.concatenate([np.pad(row, ((0, 2), (0, width - row.shape[1]), (0, 0))) for row in rows], axis=0)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    Image.fromarray(sheet).resize((sheet.shape[1] * scale, sheet.shape[0] * scale), Image.NEAREST).save(path)
+    scaled_size = (sheet.shape[1] * scale, sheet.shape[0] * scale)
+    Image.fromarray(sheet).resize(scaled_size, Image.Resampling.NEAREST).save(path)
     return path
 
 

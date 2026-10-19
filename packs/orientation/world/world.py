@@ -1,6 +1,6 @@
 """ORIENTATION's world: an office floor that goes on too long - off-white corridors with panel seams and
-baseboards, a dim green carpet, pools of fluorescent light from ceiling panels you never see. Painted in code
-(full colour; the look reduces it - the VGA look dithers the light pools).
+baseboards, a dim green carpet, pools of fluorescent light from ceiling panels you never see. Painted in
+code (full colour; the look reduces it - the VGA look dithers the light pools).
 
 Every place shares the corridor style; pack.json gives each place its name and a tint (areas[place]["tint"]).
 The castle gates are elevator doors: the gate's opening (its height in the game) slides two doors apart.
@@ -10,10 +10,13 @@ where you can walk - is untouched): a wall of filing cabinets (Records), a padde
 a wire-mesh storage cage (Archives). Their battlements become what's stacked on top.
 """
 
+from typing import Callable
+
 import numpy as np
 
-from content.world import World, area
+from content.world import Room, World, area
 from shared import layout as L
+from shared.types import Floats, Mask, Picture, Rgb
 
 CARPET = np.array([54, 76, 64], float)       # dim green
 WALL_TOP = np.array([178, 184, 176], float)  # off-white, in the gloom
@@ -24,19 +27,25 @@ BASEBOARD = np.array([78, 84, 80], float)
 LIGHT = np.array([255, 250, 228], float)     # the fluorescent pools: a touch warm
 PANEL_GRID = (48, 40)                        # ceiling panels: every 48 px across, 40 down
 GATE_SHUT, GATE_OPEN = 32, 8                 # the game's gate height (px) shut, and just before it's gone
-DOOR_FINISH = {"gold": (176, 150, 92), "white": (214, 216, 210), "black": (74, 78, 84)}  # brass, enamel, steel
+DOOR_FINISH = {"gold": (176, 150, 92), "white": (214, 216, 210),   # brass, enamel,
+               "black": (74, 78, 84)}                               # steel
+POOL_SIZE = (12.0, 9.0)                      # how far a pool of light reaches: across, down (px)
+WEAVE = 3.0                                  # the carpet's weave: how much each pixel's shade varies
+WALL_GRAIN = 1.5                             # ...and the wall tops'
+SHADOW = ((1, 0.62), (2, 0.72), (3, 0.82), (4, 0.9))   # rows below a wall -> how lit the carpet is there
 
 
-def light_pools(h, w):
+def light_pools(h: int, w: int) -> Floats:
     """0..1: soft pools of light on a grid, as from ceiling panels."""
     yy, xx = np.mgrid[0:h, 0:w].astype(float)
-    gx, gy = PANEL_GRID
-    dx = ((xx - gx / 2) % gx) - gx / 2
-    dy = ((yy - gy / 2) % gy) - gy / 2
-    return np.exp(-(dx ** 2 / (2 * 12.0 ** 2) + dy ** 2 / (2 * 9.0 ** 2)))
+    panel_w, panel_h = PANEL_GRID
+    reach_x, reach_y = POOL_SIZE
+    dx = ((xx - panel_w / 2) % panel_w) - panel_w / 2
+    dy = ((yy - panel_h / 2) % panel_h) - panel_h / 2
+    return np.exp(-(dx ** 2 / (2 * reach_x ** 2) + dy ** 2 / (2 * reach_y ** 2)))
 
 
-def elevator(w, h, finish):
+def elevator(w: int, h: int, finish_rgb: Rgb) -> Picture:
     """Elevator doors for a gate h px tall in the game (GATE_SHUT = shut): always drawn full height, anchored
     at the top of the doorway (padding above keeps them still while the game's gate box shrinks), the gap
     between the two doors widening as the gate opens. RGBA."""
@@ -44,7 +53,7 @@ def elevator(w, h, finish):
     opening = min(1.0, max(0.0, (GATE_SHUT - h) / (GATE_SHUT - GATE_OPEN)))
     out = np.zeros((2 * GATE_SHUT - h, frame_w, 4), np.uint8)
     top = GATE_SHUT - h
-    finish = np.array(finish, float)
+    finish = np.array(finish_rgb, float)
     door = out[top:top + door_h]
     door[:, :] = (28, 30, 32, 255)                                 # the frame, and the dark shaft behind
     inner = frame_w - 4
@@ -60,14 +69,17 @@ def elevator(w, h, finish):
 
 
 CASTLE_ROOMS = {0x11: "records", 0x0F: "wellness", 0x10: "archives"}  # gold, white, black
-CASTLE_BOX = (60, 180, 0, 144)  # the castle's part of the room: x0, x1, y0, y1 (grid columns 10-29, rows 0-4)
+CASTLE_BOX = (60, 180, 0, 144)  # the castle's part of the room: x0, x1, y0, y1 (grid columns 10-29,
+                                # rows 0-4)
 TOP = 16                        # the battlements' row
+BOX_COLOURS = np.array([(150, 116, 72), (60, 84, 120), (150, 116, 72), (120, 50, 46), (166, 132, 86),
+                        (64, 96, 78)], float)   # what's stacked on the filing cabinets, left to right
 
 
-def records(img, cm, xx, yy):
+def records(img: Floats, castle: Mask, xx: Floats, yy: Floats) -> None:
     """A wall of beige filing cabinets, binders and boxes stacked on top."""
     cab, drawer = 12, 12
-    body = cm & (yy >= TOP)
+    body = castle & (yy >= TOP)
     img[body] = (196, 184, 150)
     front = body & ((yy - TOP) % drawer >= 1) & ((xx % cab) >= 1) & ((xx % cab) <= cab - 2)
     img[front] = (214, 204, 172)                                         # each drawer's face
@@ -77,23 +89,24 @@ def records(img, cm, xx, yy):
     img[handle] = (70, 66, 60)
     label = front & ((yy - TOP) % drawer >= 3) & ((yy - TOP) % drawer <= 4) & (np.abs(xx % cab - 6) <= 1)
     img[label] = (240, 236, 222)
-    top = cm & (yy < TOP)                                                # boxes and binders on top
-    colours = [(150, 116, 72), (60, 84, 120), (150, 116, 72), (120, 50, 46), (166, 132, 86), (64, 96, 78)]
-    img[top] = np.array(colours)[(xx[top] // 6) % len(colours)]
+    top = castle & (yy < TOP)                                                # boxes and binders on top
+    which_box = (xx[top] // 6).astype(int) % len(BOX_COLOURS)            # a box or binder every 6 px
+    img[top] = BOX_COLOURS[which_box]
     img[top & (yy % 8 == 7)] = (90, 70, 46)
 
 
-def wellness(img, cm, xx, yy):
+def wellness(img: Floats, castle: Mask, xx: Floats, yy: Floats) -> None:
     """A padded partition suite: pale cushioned panels with wood trim, small plants along the top."""
     panel = 16
-    body = cm & (yy >= TOP)
-    u = (xx % panel) / (panel - 1)
-    cushion = 1.0 - 0.18 * (2 * u - 1) ** 2                              # each panel rounded, lit from the front
+    body = castle & (yy >= TOP)
+    across = (xx % panel) / (panel - 1)
+    cushion = 1.0 - 0.18 * (2 * across - 1) ** 2                         # each panel rounded, lit from the
+                                                                         # front
     img[body] = (np.array((214, 216, 206), float)[None] * cushion[body][:, None]).astype(int)
     img[body & (xx % panel == 0)] = (150, 152, 144)
     img[body & ((yy == TOP) | (yy == TOP + 1))] = (150, 110, 74)         # wood trim, top and bottom
     img[body & (yy >= CASTLE_BOX[3] - 4)] = (150, 110, 74)
-    top = cm & (yy < TOP)                                                # a potted plant on each bump
+    top = castle & (yy < TOP)                                                # a potted plant on each bump
     img[top] = (54, 76, 64)                                              # (the carpet shows round them)
     pot = top & (yy >= TOP - 5)
     img[pot] = (176, 96, 64)
@@ -101,10 +114,10 @@ def wellness(img, cm, xx, yy):
     img[leaves] = (76, 140, 82)
 
 
-def archives(img, cm, xx, yy):
+def archives(img: Floats, castle: Mask, xx: Floats, yy: Floats) -> None:
     """A wire-mesh storage cage: steel frame, a grid of mesh, shelves of archive boxes in the dark behind.
     Ducts and vents along the top."""
-    body = cm & (yy >= TOP)
+    body = castle & (yy >= TOP)
     img[body] = (24, 26, 30)                                             # the dark inside
     shelf = body & ((yy - TOP) % 24 == 23)
     img[shelf] = (70, 74, 80)
@@ -114,67 +127,79 @@ def archives(img, cm, xx, yy):
     mesh = body & ((xx % 4 == 0) | ((yy - TOP) % 4 == 0))
     img[mesh] = (104, 110, 116)                                          # the mesh in front of it all
     img[body & ((xx % 40 == 0) | (xx % 40 == 1))] = (52, 56, 60)        # the frame's uprights
-    top = cm & (yy < TOP)                                                # vent stacks with dark slits
+    top = castle & (yy < TOP)                                                # vent stacks with dark slits
     img[top] = (112, 116, 122)
     img[top & (yy % 4 == 2)] = (40, 42, 46)
 
 
-STRUCTURES = {"records": records, "wellness": wellness, "archives": archives}
+Structure = Callable[[Floats, Mask, Floats, Floats], None]   # paints a castle's structure
+STRUCTURES: dict[str, Structure] = {"records": records, "wellness": wellness, "archives": archives}
 
 
 FLICKER = {0: 0.72, 1: 0.72, 2: 0.72, 5: 0.82, 6: 0.82, 11: 0.76}  # frames into a stutter -> how lit
 
 
-class CustomWorld(World):
-    def lighting(self, room_num, frame_no):
-        """Every 7-13 s (it differs room to room) the lights stutter: a dip, back, two shorter dips."""
-        period = 420 + (room_num * 97) % 360
-        return FLICKER.get((frame_no + room_num * 53) % period, 1.0)
+def carpet(h: int, w: int, tint: Floats, rng: np.random.Generator) -> Floats:
+    """The carpet: a low, even weave, lit in pools."""
+    weave = rng.normal(0, WEAVE, (h, w))
+    weave += 2.0 * ((np.arange(w)[None, :] + np.arange(h)[:, None]) % 4 == 0)
+    pools = light_pools(h, w)[..., None]
+    floor = CARPET[None, None] * tint + weave[..., None]
+    return floor * (0.55 + 0.45 * pools) + (LIGHT - CARPET)[None, None] * 0.12 * pools
 
-    def gate(self, castle, w, h):
+
+def paint_walls(img: Floats, walls: Mask, tint: Floats, rng: np.random.Generator) -> Mask:
+    """The walls: off-white tops with panel seams, a darker front face where the floor is below, a
+    baseboard, and a soft shadow on the carpet below. Gives the baseboard's pixels."""
+    h, w = walls.shape
+    xx = np.mgrid[0:h, 0:w][1]
+    top = np.broadcast_to(WALL_TOP * tint, (h, w, 3)).copy()
+    top[(xx % 24 == 0)] *= SEAM
+    top += rng.normal(0, WALL_GRAIN, (h, w))[..., None]
+    img[walls] = top[walls]
+    above_floor = [~np.roll(walls, -rows, axis=0) for rows in range(1, 7)]
+    face = walls & np.logical_or.reduce(above_floor)
+    img[face] = (WALL_TOP * tint * FACE)
+    surrounded = np.roll(walls, 1, 0) & np.roll(walls, -1, 0) & np.roll(walls, 1, 1) & np.roll(walls, -1, 1)
+    img[walls & ~surrounded & ~face] = EDGE * tint
+    base = walls & ~np.roll(walls, -1, axis=0) | walls & ~np.roll(walls, -2, axis=0)
+    img[base] = BASEBOARD
+    for rows, dim in SHADOW:
+        below = ~walls & np.roll(walls, rows, axis=0)
+        img[below] *= dim
+    return base
+
+
+class CustomWorld(World):
+    def lighting(self, room_number: int, frame_no: int) -> float:
+        """Every 7-13 s (it differs room to room) the lights stutter: a dip, back, two shorter dips."""
+        period = 420 + (room_number * 97) % 360
+        return FLICKER.get((frame_no + room_number * 53) % period, 1.0)
+
+    def gate(self, castle: str, w: int, h: int) -> Picture | None:
         return elevator(w, h, DOOR_FINISH[castle]) if h > 0 else None
 
-    def tint(self, room_num):
-        t = self.setting(area(room_num), "tint")
-        return np.array(t if t else (1.0, 1.0, 1.0), float)
+    def tint(self, room_number: int) -> Floats:
+        chosen = self.setting(area(room_number), "tint")
+        return np.array(chosen if chosen else (1.0, 1.0, 1.0), float)
 
-    def room(self, room):
-        n = room["room"]
-        if n in self.rooms:
-            return self.rooms[n]
-        m = L.wall_mask(room)
-        h, w = m.shape
-        rng = np.random.default_rng(n)
-        tint = self.tint(n)
-        # the carpet: a low, even weave, lit in pools
-        weave = rng.normal(0, 3.0, (h, w))
-        weave += 2.0 * ((np.arange(w)[None, :] + np.arange(h)[:, None]) % 4 == 0)
-        pools = light_pools(h, w)
-        floor = CARPET[None, None] * tint + weave[..., None]
-        floor = floor * (0.55 + 0.45 * pools[..., None]) + (LIGHT - CARPET)[None, None] * 0.12 * pools[..., None]
-        img = floor.copy()
-        # the walls: off-white tops with panel seams, a darker front face where the floor is below, a baseboard
-        yy, xx = np.mgrid[0:h, 0:w]
-        top = np.broadcast_to(WALL_TOP * tint, (h, w, 3)).copy()
-        top[(xx % 24 == 0)] *= SEAM
-        top += rng.normal(0, 1.5, (h, w))[..., None]
-        img[m] = top[m]
-        above_floor = [~np.roll(m, -k, axis=0) for k in range(1, 7)]
-        face = m & np.logical_or.reduce(above_floor)
-        img[face] = (WALL_TOP * tint * FACE)
-        edge = m & ~(np.roll(m, 1, 0) & np.roll(m, -1, 0) & np.roll(m, 1, 1) & np.roll(m, -1, 1)) & ~face
-        img[edge] = EDGE * tint
-        base = m & ~np.roll(m, -1, axis=0) | m & ~np.roll(m, -2, axis=0)
-        img[base] = BASEBOARD
-        # a soft shadow on the carpet below each wall
-        for k, dim in ((1, 0.62), (2, 0.72), (3, 0.82), (4, 0.9)):
-            below = ~m & np.roll(m, k, axis=0)
-            img[below] *= dim
-        if n in CASTLE_ROOMS:  # the castle's walls as a structure on the floor
+    def room(self, room: Room) -> Picture:
+        room_number = room["room"]
+        if room_number in self.rooms:
+            return self.rooms[room_number]
+        walls = L.wall_mask(room)
+        h, w = walls.shape
+        rng = np.random.default_rng(room_number)
+        tint = self.tint(room_number)
+        img = carpet(h, w, tint, rng)
+        base = paint_walls(img, walls, tint, rng)
+        if room_number in CASTLE_ROOMS:  # the castle's walls as a structure on the floor
             x0, x1, y0, y1 = CASTLE_BOX
-            cm = m & (xx >= x0) & (xx < x1) & (yy >= y0) & (yy < y1)
-            STRUCTURES[CASTLE_ROOMS[n]](img, cm, xx, yy)
-            if CASTLE_ROOMS[n] != "wellness":  # standing on the floor: a baseboard, like the corridor walls
-                img[cm & base] = BASEBOARD
-        self.rooms[n] = np.clip(img, 0, 255).astype(np.uint8)
-        return self.rooms[n]
+            yy, xx = np.mgrid[0:h, 0:w]
+            castle = walls & (xx >= x0) & (xx < x1) & (yy >= y0) & (yy < y1)
+            structure = CASTLE_ROOMS[room_number]
+            STRUCTURES[structure](img, castle, xx, yy)
+            if structure != "wellness":  # standing on the floor: a baseboard, like the corridor walls
+                img[castle & base] = BASEBOARD
+        self.rooms[room_number] = np.clip(img, 0, 255).astype(np.uint8)
+        return self.rooms[room_number]
